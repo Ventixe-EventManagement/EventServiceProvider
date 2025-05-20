@@ -1,13 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Data.Entities;
+namespace Business.Models;
 
-public class EventEntity
+public class CreateEventRequest
 {
-    [Key]
-    public Guid Id { get; set; } = Guid.NewGuid();
-
     [Required]
     public string EventName { get; set; } = null!;
 
@@ -15,9 +11,8 @@ public class EventEntity
     public string Category { get; set; } = null!;
 
     public string? ImageUrl { get; set; }
-    
+
     [Required]
-    [Column(TypeName = "datetime2")]
     public DateTime EventDate { get; set; }
 
     [Required]
@@ -25,5 +20,5 @@ public class EventEntity
 
     public string Description { get; set; } = null!;
 
-    public ICollection <EventPackageEntity> Packages { get; set; } = [];
+
 }
