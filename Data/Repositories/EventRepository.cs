@@ -5,12 +5,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Data.Repositories;
 
-public class EventRepository : BaseRepository<EventEntity>, IEventRepository
+public class EventRepository(DataContext context) : BaseRepository<EventEntity>(context), IEventRepository
 {
-    public EventRepository(DataContext context) : base(context)
-    {
-    }
-
     public Task<IEnumerable<EventEntity>> GetAllWithPackagesAsync()
     {
         return GetAllWithDetailsAsync(query => query.Include(e => e.Packages));
