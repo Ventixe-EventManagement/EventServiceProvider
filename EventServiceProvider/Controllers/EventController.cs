@@ -1,11 +1,13 @@
 ﻿using Business.Interfaces;
 using Business.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventServiceProvider.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class EventsController(IEventService eventService) : ControllerBase
 {
     private readonly IEventService _eventService = eventService;
