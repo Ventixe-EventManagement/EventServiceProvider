@@ -24,4 +24,7 @@ public interface IBaseRepository<TEntity> where TEntity : class
         Expression<Func<TEntity, object>>? sortBy = null,
         Expression<Func<TEntity, bool>>? where = null,
         params Expression<Func<TEntity, object>>[] includes);
+
+    Task<RepositoryResult<IEnumerable<TEntity>>> GetAllByPredicateAsync(
+    Expression<Func<TEntity, bool>> predicate);
 }

@@ -1,4 +1,5 @@
-﻿using Business.Interfaces;
+﻿using System.Security.Claims;
+using Business.Interfaces;
 using Business.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,6 +21,18 @@ public class EventsController(IEventService eventService) : ControllerBase
         return result.Success ? Ok(result.Result) : StatusCode(result.StatusCode, result.Error);
     }
 
+    // GET: api/events/mine
+    [HttpGet("mine")]
+    public async Task<IActionResult> GetMine()
+    {
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
+            return Unauthorized("Missing or invalid user ID.");
+
+        var result = await _eventService.GetEventsByCreatorAsync(userId);
+        return result.Success ? Ok(result.Result) : StatusCode(result.StatusCode, result.Error);
+    }
+
     // GET: api/events/{id}
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
@@ -35,7 +48,13 @@ public class EventsController(IEventService eventService) : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var result = await _eventService.CreateEventAsync(request);
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
+            return Unauthorized("Missing or invalid user ID.");
+
+        request.CreatorId = userId;
+
+        var result = await _eventService.CreateEventAsync(request, userIdClaim);
         return result.Success ? StatusCode(201) : StatusCode(result.StatusCode, result.Error);
     }
 
@@ -46,15 +65,23 @@ public class EventsController(IEventService eventService) : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var result = await _eventService.UpdateEventAsync(id, request);
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(userIdClaim))
+            return Unauthorized("Missing or invalid user ID.");
+
+        var result = await _eventService.UpdateEventAsync(id, request, userIdClaim);
         return result.Success ? NoContent() : StatusCode(result.StatusCode, result.Error);
     }
-
     // DELETE: api/events/{id}
     [HttpDelete("{id}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var result = await _eventService.DeleteEventAsync(id);
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(userIdClaim))
+            return Unauthorized("Missing or invalid user ID.");
+
+        var result = await _eventService.DeleteEventAsync(id, userIdClaim);
         return result.Success ? NoContent() : StatusCode(result.StatusCode, result.Error);
     }
+
 }

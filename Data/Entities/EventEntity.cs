@@ -8,6 +8,8 @@ public class EventEntity
     [Key]
     public Guid Id { get; set; } = Guid.NewGuid();
 
+    public Guid CreatorId { get; set; }
+
     [Required]
     public string EventName { get; set; } = null!;
 

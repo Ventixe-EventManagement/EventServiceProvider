@@ -20,5 +20,7 @@ public class CreateEventRequest
 
     public string Description { get; set; } = null!;
 
+    public Guid? CreatorId { get; set; }
+
 
 }

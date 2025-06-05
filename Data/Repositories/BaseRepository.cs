@@ -6,7 +6,6 @@ using Data.Helpers;
 using System.Diagnostics;
 using Data.Interfaces;
 
-
 namespace Data.Repositories;
 
 /// <summary>
@@ -56,7 +55,6 @@ public abstract class BaseRepository<TEntity>(DataContext context) : IBaseReposi
         {
             await _dbSet.AddAsync(entity);
             await _context.SaveChangesAsync();
-
             return RepositoryResult<TEntity>.Success(entity);
         }
         catch (Exception ex)
@@ -66,9 +64,6 @@ public abstract class BaseRepository<TEntity>(DataContext context) : IBaseReposi
         }
     }
 
-    /// <summary>
-    /// Returns all entities of type TEntity.
-    /// </summary>
     public virtual async Task<RepositoryResult<IEnumerable<TEntity>>> GetAllAsync()
     {
         try
@@ -83,9 +78,6 @@ public abstract class BaseRepository<TEntity>(DataContext context) : IBaseReposi
         }
     }
 
-    /// <summary>
-    /// Returns entities projected to TSelect, with optional filtering, sorting, and includes.
-    /// </summary>
     public virtual async Task<RepositoryResult<IEnumerable<TSelect>>> GetAllAsync<TSelect>(
         Expression<Func<TEntity, TSelect>> selector,
         bool orderByDescending = false,
@@ -107,9 +99,7 @@ public abstract class BaseRepository<TEntity>(DataContext context) : IBaseReposi
                 ? query.OrderByDescending(sortBy)
                 : query.OrderBy(sortBy);
 
-        var projected = await query
-            .Select(selector)
-            .ToListAsync();
+        var projected = await query.Select(selector).ToListAsync();
 
         return new RepositoryResult<IEnumerable<TSelect>>
         {
@@ -119,9 +109,6 @@ public abstract class BaseRepository<TEntity>(DataContext context) : IBaseReposi
         };
     }
 
-    /// <summary>
-    /// Retrieves all entities including related navigation properties.
-    /// </summary>
     public virtual async Task<IEnumerable<TEntity>> GetAllWithDetailsAsync(
         Func<IQueryable<TEntity>, IQueryable<TEntity>> includeExpression)
     {
@@ -141,8 +128,23 @@ public abstract class BaseRepository<TEntity>(DataContext context) : IBaseReposi
     }
 
     /// <summary>
-    /// Retrieves a single entity matching the given predicate.
+    /// Returns all entities that match a given predicate.
     /// </summary>
+    public virtual async Task<RepositoryResult<IEnumerable<TEntity>>> GetAllByPredicateAsync(
+        Expression<Func<TEntity, bool>> predicate)
+    {
+        try
+        {
+            var items = await _dbSet.Where(predicate).ToListAsync();
+            return RepositoryResult<IEnumerable<TEntity>>.Success(items);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error retrieving filtered {nameof(TEntity)}: {ex.Message}");
+            return RepositoryResult<IEnumerable<TEntity>>.Failure($"Failed to retrieve entities: {ex.Message}", 500);
+        }
+    }
+
     public virtual async Task<TEntity?> GetOneAsync(Expression<Func<TEntity, bool>> expression)
     {
         try
@@ -156,9 +158,6 @@ public abstract class BaseRepository<TEntity>(DataContext context) : IBaseReposi
         }
     }
 
-    /// <summary>
-    /// Retrieves a single entity matching the predicate, including related data.
-    /// </summary>
     public virtual async Task<TEntity?> GetOneWithDetailsAsync(
         Func<IQueryable<TEntity>, IQueryable<TEntity>> includeExpression,
         Expression<Func<TEntity, bool>> predicate)
@@ -178,16 +177,12 @@ public abstract class BaseRepository<TEntity>(DataContext context) : IBaseReposi
         }
     }
 
-    /// <summary>
-    /// Marks the entity as modified in the context.
-    /// </summary>
     public virtual async Task<RepositoryResult<TEntity>> UpdateAsync(TEntity entity)
     {
         try
         {
             _dbSet.Update(entity);
             await _context.SaveChangesAsync();
-
             return RepositoryResult<TEntity>.Success(entity);
         }
         catch (Exception ex)
@@ -197,16 +192,12 @@ public abstract class BaseRepository<TEntity>(DataContext context) : IBaseReposi
         }
     }
 
-    /// <summary>
-    /// Marks the entity for deletion from the context.
-    /// </summary>
     public virtual async Task<RepositoryResult<TEntity>> DeleteAsync(TEntity entity)
     {
         try
         {
             _dbSet.Remove(entity);
             await _context.SaveChangesAsync();
-
             return RepositoryResult<TEntity>.Success(entity);
         }
         catch (Exception ex)
@@ -216,9 +207,6 @@ public abstract class BaseRepository<TEntity>(DataContext context) : IBaseReposi
         }
     }
 
-    /// <summary>
-    /// Checks if any entity matches the given predicate.
-    /// </summary>
     public virtual async Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate)
     {
         try

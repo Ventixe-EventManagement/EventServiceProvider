@@ -9,11 +9,11 @@ public class EventService(IEventRepository eventRepository) : IEventService
 {
     private readonly IEventRepository _eventRepository = eventRepository;
 
-    public async Task<EventResult> CreateEventAsync(CreateEventRequest request)
+    public async Task<EventResult> CreateEventAsync(CreateEventRequest request, string userId)
     {
         try
         {
-            var eventEntity = EventFactory.FromRequest(request);
+            var eventEntity = EventFactory.FromRequest(request, userId);
             var result = await _eventRepository.AddAsync(eventEntity);
 
             if (!result.Succeeded)
@@ -27,7 +27,7 @@ public class EventService(IEventRepository eventRepository) : IEventService
         }
     }
 
-    public async Task<EventResult<IEnumerable<Event>>> GetEventsAsync() //Behöver jag inkludera packages här för listvyn?
+    public async Task<EventResult<IEnumerable<Event>>> GetEventsAsync()
     {
         try
         {
@@ -63,7 +63,7 @@ public class EventService(IEventRepository eventRepository) : IEventService
         }
     }
 
-    public async Task<EventResult> UpdateEventAsync(Guid id, UpdateEventRequest request)
+    public async Task<EventResult> UpdateEventAsync(Guid id, UpdateEventRequest request, string userId)
     {
         try
         {
@@ -71,6 +71,9 @@ public class EventService(IEventRepository eventRepository) : IEventService
 
             if (entity == null)
                 return EventResult.CreateFailure("Event not found", 404);
+
+            if (entity.CreatorId.ToString() != userId)
+                return EventResult.CreateFailure("Unauthorized", 403);
 
             entity.EventName = request.EventName;
             entity.Category = request.Category;
@@ -91,7 +94,7 @@ public class EventService(IEventRepository eventRepository) : IEventService
         }
     }
 
-    public async Task<EventResult> DeleteEventAsync(Guid id)
+    public async Task<EventResult> DeleteEventAsync(Guid id, string userId)
     {
         try
         {
@@ -99,6 +102,9 @@ public class EventService(IEventRepository eventRepository) : IEventService
 
             if (entity == null)
                 return EventResult.CreateFailure("Event not found", 404);
+
+            if (entity.CreatorId.ToString() != userId)
+                return EventResult.CreateFailure("Unauthorized", 403);
 
             var result = await _eventRepository.DeleteAsync(entity);
 
@@ -109,6 +115,24 @@ public class EventService(IEventRepository eventRepository) : IEventService
         catch (Exception ex)
         {
             return EventResult.CreateFailure($"Unexpected error: {ex.Message}", 500);
+        }
+    }
+
+    public async Task<EventResult<IEnumerable<Event>>> GetEventsByCreatorAsync(Guid creatorId)
+    {
+        try
+        {
+            var result = await _eventRepository.GetAllByPredicateAsync(e => e.CreatorId == creatorId);
+
+            if (!result.Succeeded)
+                return EventResult<IEnumerable<Event>>.CreateFailure(result.Error ?? "Failed to fetch events", result.StatusCode);
+
+            var events = result.Result!.Select(EventFactory.ToDto);
+            return EventResult<IEnumerable<Event>>.CreateSuccess(events);
+        }
+        catch (Exception ex)
+        {
+            return EventResult<IEnumerable<Event>>.CreateFailure($"Unexpected error: {ex.Message}", 500);
         }
     }
 

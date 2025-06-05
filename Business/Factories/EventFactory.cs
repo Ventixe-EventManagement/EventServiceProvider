@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Business.Models;
+﻿using Business.Models;
 using Data.Entities;
-using Microsoft.EntityFrameworkCore.Diagnostics;
+
 namespace Business.Factories;
 
 public static class EventFactory
@@ -13,7 +8,7 @@ public static class EventFactory
     /// <summary>
     /// Skapar ett nytt EventEntity från en CreateEventRequest.
     /// </summary>
-    public static EventEntity FromRequest(CreateEventRequest request)
+    public static EventEntity FromRequest(CreateEventRequest request, string userId)
     {
         return new EventEntity
         {
@@ -23,8 +18,11 @@ public static class EventFactory
             EventDate = request.EventDate,
             Location = request.Location,
             Description = request.Description,
+            CreatorId = Guid.Parse(userId)
         };
     }
+
+
     public static Event ToDto(EventEntity entity)
     {
         return new Event
