@@ -9,6 +9,5 @@ public class Event
     public DateTime EventDate { get; set; }
     public string Location { get; set; } = null!;
     public string Description { get; set; } = null!;
-
     public List<Package> Packages { get; set; } = [];
 }

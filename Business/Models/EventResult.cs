@@ -4,7 +4,6 @@ public class EventResult
     public bool Success { get; set; }
     public string? Error { get; set; }
     public int StatusCode { get; set; } = 200;
-
     public static EventResult CreateSuccess(int statusCode = 200) => new()
     {
         Success = true,

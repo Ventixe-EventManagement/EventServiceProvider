@@ -22,7 +22,6 @@ public static class EventFactory
         };
     }
 
-
     public static Event ToDto(EventEntity entity)
     {
         return new Event

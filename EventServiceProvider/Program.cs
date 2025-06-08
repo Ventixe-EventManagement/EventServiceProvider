@@ -1,4 +1,5 @@
-using System.Text;
+﻿using System.Text;
+using Azure.Identity;
 using Business.Interfaces;
 using Business.Services;
 using Data.Context;
@@ -11,14 +12,19 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+// Azure Key Vault as configuration sourche
+builder.Configuration.AddAzureKeyVault(
+    new Uri("https://ventixekeyvault.vault.azure.net/"),
+    new DefaultAzureCredential()
+);
 
-// Configure Swagger with JWT support
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Event Service API", Version = "v1" });
+
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme. Example: 'Bearer {token}'",
@@ -28,6 +34,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "bearer",
         BearerFormat = "JWT"
     });
+
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -44,16 +51,15 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Configure EF Core
+// Entity Framework with Key Vault connection string
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("SqlConnection"))
 );
 
-// Register repositories and services
 builder.Services.AddScoped<IEventRepository, EventRepository>();
 builder.Services.AddScoped<IEventService, EventService>();
 
-// Configure JWT Authentication and Authorization
+// JWT-authentisering with Key Vault-secrets
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -65,13 +71,15 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!))
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!)
+            )
         };
+
         options.Events = new JwtBearerEvents
         {
             OnAuthenticationFailed = context =>
             {
-                Console.WriteLine($"JWT validation failed: {context.Exception.Message}");
+                Console.WriteLine($"❌ JWT validation failed: {context.Exception.Message}");
                 return Task.CompletedTask;
             }
         };
@@ -79,10 +87,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// Build the app
+
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -91,6 +98,7 @@ app.UseSwaggerUI(c =>
 });
 
 app.UseHttpsRedirection();
+
 app.UseCors(policy => policy
     .AllowAnyOrigin()
     .AllowAnyMethod()

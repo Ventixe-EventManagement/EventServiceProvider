@@ -8,7 +8,6 @@ public interface IBaseRepository<TEntity> where TEntity : class
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();
     Task RollbackTransactionAsync();
-
     Task<RepositoryResult<TEntity>> AddAsync(TEntity entity);
     Task<RepositoryResult<TEntity>> UpdateAsync(TEntity entity);
     Task<RepositoryResult<TEntity>> DeleteAsync(TEntity entity);

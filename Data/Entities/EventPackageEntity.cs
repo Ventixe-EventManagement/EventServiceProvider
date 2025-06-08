@@ -2,7 +2,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Data.Entities;
-
 public class EventPackageEntity
 {
     [Key]
